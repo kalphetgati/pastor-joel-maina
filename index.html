@@ -34,12 +34,21 @@
                 <li><a href="#healing" class="nav-link">Healing</a></li>
                 <li><a href="#marriage" class="nav-link">Marriage</a></li>
                 <li><a href="#gallery" class="nav-link">Gallery</a></li>
+                <li><a href="#publications" class="nav-link">Publications</a></li>
                 <li><a href="#reviews" class="nav-link">Reviews</a></li>
                 <li><a href="#donations" class="nav-link">Donations</a></li>
                 <li><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
         </div>
+        <div class="nav-search-wrapper">
+            <div class="nav-search">
+                <input type="search" id="siteSearch" placeholder="Search site..." aria-label="Search the website">
+                <button id="searchBtn" class="btn btn-search" type="button"><i class="fas fa-search"></i></button>
+            </div>
+        </div>
     </nav>
+    <div class="search-results" id="searchResults" aria-live="polite"></div>
+    
 
     <!-- Hero Section -->
     <section id="home" class="hero">
@@ -348,6 +357,55 @@
         </div>
     </section>
 
+    <!-- Publications Section -->
+    <section id="publications" class="section publications">
+        <div class="container">
+            <div class="section-header">
+                <h2>Publications</h2>
+                <div class="divider"><i class="fas fa-cross"></i></div>
+                <p>Explore monthly magazines, sermon notes, and downloadable ministry resources.</p>
+            </div>
+            <div class="publications-grid">
+                <div class="publication-card featured">
+                    <div class="pub-icon"><i class="fas fa-book-open"></i></div>
+                    <h3>Monthly Pastor Joel Magazines</h3>
+                    <p>Download the latest issue of Pastor Joel's magazine filled with devotionals, leadership insights, and spiritual encouragement.</p>
+                    <a href="joels%20magazines.pdf" class="btn btn-primary" download>Download Magazine</a>
+                </div>
+                <div class="publication-card">
+                    <div class="pub-icon"><i class="fas fa-file-pdf"></i></div>
+                    <h3>Sermon Notes (PDF)</h3>
+                    <p>Study guides for Pastor Joel's sermons to help you reflect, pray, and apply Scripture.</p>
+                </div>
+                <div class="publication-card">
+                    <div class="pub-icon"><i class="fas fa-scroll"></i></div>
+                    <h3>Christian Leadership Articles</h3>
+                    <p>Articles on servant leadership, biblical influence, and strengthening your ministry impact.</p>
+                </div>
+                <div class="publication-card">
+                    <div class="pub-icon"><i class="fas fa-child"></i></div>
+                    <h3>Parenting Guides</h3>
+                    <p>Practical, faith-filled guidance for raising children with strong spiritual foundations.</p>
+                </div>
+                <div class="publication-card">
+                    <div class="pub-icon"><i class="fas fa-user-graduate"></i></div>
+                    <h3>Youth Mentorship Resources</h3>
+                    <p>Resources designed to nurture teenagers and young adults in faith, purpose, and character.</p>
+                </div>
+                <div class="publication-card">
+                    <div class="pub-icon"><i class="fas fa-heart"></i></div>
+                    <h3>Marriage & Family Resources</h3>
+                    <p>Support tools for couples and families seeking stronger, Christ-centered relationships.</p>
+                </div>
+                <div class="publication-card">
+                    <div class="pub-icon"><i class="fas fa-book"></i></div>
+                    <h3>Downloadable Books & E-books</h3>
+                    <p>Ministry books and teaching materials to help you grow deeper in faith and knowledge.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Reviews Section -->
     <section id="reviews" class="section reviews">
         <div class="container">
@@ -546,6 +604,7 @@
                         <li><a href="#about">About</a></li>
                         <li><a href="#parenting">Parenting</a></li>
                         <li><a href="#business">Business</a></li>
+                        <li><a href="#publications">Publications</a></li>
                         <li><a href="#contact">Contact</a></li>
                     </ul>
                 </div>
@@ -577,5 +636,6 @@
     </footer>
 
     <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
 </body>
 </html>

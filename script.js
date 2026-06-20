@@ -385,6 +385,175 @@ window.removeEventListener('scroll', checkCounterVisibility);
 
 window.addEventListener('scroll', debouncedUpdate);
 
+// ===== SITE SEARCH (improved: fuzzy + highlights via Fuse.js) =====
+const siteSearchInput = document.getElementById('siteSearch');
+const siteSearchBtn = document.getElementById('searchBtn');
+const searchResults = document.getElementById('searchResults');
+
+// Build the documents to search: gather section id, title and text content
+const documents = Array.from(document.querySelectorAll('section[id]')).map(section => {
+    const header = section.querySelector('.section-header h2');
+    const title = header ? header.textContent.trim() : section.id;
+    const text = Array.from(section.querySelectorAll('h1,h2,h3,p,li')).map(n => n.textContent).join(' ');
+    return {
+        id: section.id,
+        title: title,
+        text: text.replace(/\s+/g, ' ').trim()
+    };
+});
+
+// Fuse.js options tuned for small-site fuzzy search
+const fuseOptions = {
+    keys: [
+        { name: 'title', weight: 0.8 },
+        { name: 'text', weight: 0.5 }
+    ],
+    includeMatches: true,
+    includeScore: true,
+    threshold: 0.35,
+    minMatchCharLength: 2,
+    ignoreLocation: true
+};
+
+let fuse;
+try {
+    fuse = new Fuse(documents, fuseOptions);
+} catch (e) {
+    console.warn('Fuse.js not available, falling back to basic search', e);
+}
+
+// Utility: create a short highlighted snippet from matches
+function makeSnippet(doc, matches, maxLen = 140) {
+    if (!matches || !matches.length) {
+        return doc.text.substring(0, maxLen) + (doc.text.length > maxLen ? '…' : '');
+    }
+
+    // find earliest match in text or title
+    const textMatch = matches.find(m => m.key === 'text');
+    const titleMatch = matches.find(m => m.key === 'title');
+
+    if (textMatch) {
+        const loc = textMatch.indices[0];
+        const start = Math.max(0, loc[0] - 30);
+        const end = Math.min(doc.text.length, loc[1] + 30);
+        let snippet = doc.text.substring(start, end);
+        // highlight all matched fragments
+        textMatch.indices.forEach(pair => {
+            const s = pair[0] - start;
+            const e = pair[1] - start + 1;
+            if (s >= 0 && e > s) {
+                const before = snippet.slice(0, s);
+                const matchText = snippet.slice(s, e);
+                const after = snippet.slice(e);
+                snippet = before + '<strong>' + matchText + '</strong>' + after;
+            }
+        });
+        return (start > 0 ? '…' : '') + snippet + (end < doc.text.length ? '…' : '');
+    }
+
+    if (titleMatch) {
+        // highlight title match
+        let t = doc.title;
+        titleMatch.indices.forEach(pair => {
+            const s = pair[0];
+            const e = pair[1] + 1;
+            t = t.slice(0, s) + '<strong>' + t.slice(s, e) + '</strong>' + t.slice(e);
+        });
+        return t + ' — ' + doc.text.substring(0, 80) + (doc.text.length > 80 ? '…' : '');
+    }
+
+    return doc.text.substring(0, maxLen) + (doc.text.length > maxLen ? '…' : '');
+}
+
+function renderSearchResults(query, items) {
+    const sanitizedQuery = query.trim();
+    if (!sanitizedQuery) {
+        searchResults.classList.remove('active');
+        searchResults.innerHTML = '';
+        return;
+    }
+
+    if (!items || !items.length) {
+        searchResults.innerHTML = `<div class="no-results">No results found for "${sanitizedQuery}".</div>`;
+        searchResults.classList.add('active');
+        return;
+    }
+
+    const html = items.map(item => {
+        const doc = item.item || item; // Fuse returns {item, score, matches}
+        const matches = item.matches || [];
+        const snippet = makeSnippet(doc, matches);
+        return `
+            <div class="result-item">
+                <a href="#${doc.id}" data-target="${doc.id}">${doc.title}</a>
+                <p>${snippet}</p>
+            </div>
+        `;
+    }).join('');
+
+    searchResults.innerHTML = `<h4>Search results for "${sanitizedQuery}"</h4>${html}`;
+    searchResults.classList.add('active');
+}
+
+// Debounced search handler
+function performSearch(query) {
+    const q = (typeof query === 'string') ? query.trim() : siteSearchInput.value.trim();
+    if (!q) {
+        searchResults.classList.remove('active');
+        searchResults.innerHTML = '';
+        return;
+    }
+
+    if (fuse) {
+        const results = fuse.search(q);
+        renderSearchResults(q, results.slice(0, 20));
+    } else {
+        // Fallback: simple substring match
+        const filtered = documents.filter(d => (d.title + ' ' + d.text).toLowerCase().includes(q.toLowerCase()));
+        renderSearchResults(q, filtered.slice(0, 20));
+    }
+}
+
+const debouncedSearch = debounce((e) => performSearch(e?.target?.value || siteSearchInput.value), 180);
+
+siteSearchInput.addEventListener('input', debouncedSearch);
+siteSearchInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        performSearch(siteSearchInput.value);
+    }
+});
+
+siteSearchBtn.addEventListener('click', () => performSearch(siteSearchInput.value));
+
+// Handle clicks on results (smooth scroll)
+searchResults.addEventListener('click', event => {
+    const link = event.target.closest('a[data-target]');
+    if (link) {
+        const targetId = link.getAttribute('data-target');
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+            const navHeight = navbar.offsetHeight;
+            const offsetTop = targetElement.offsetTop - navHeight;
+            window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+            // briefly focus the section for screen readers
+            targetElement.setAttribute('tabindex', '-1');
+            targetElement.focus({ preventScroll: true });
+            setTimeout(() => targetElement.removeAttribute('tabindex'), 1500);
+        }
+
+        searchResults.classList.remove('active');
+    }
+});
+
+// Close results when clicking outside
+document.addEventListener('click', event => {
+    const isClickInside = event.target.closest('.nav-search') || event.target.closest('#searchResults');
+    if (!isClickInside) {
+        searchResults.classList.remove('active');
+    }
+});
+
 // ===== SERVICE WORKER REGISTRATION (for PWA support) =====
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
